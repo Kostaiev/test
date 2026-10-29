@@ -32,9 +32,10 @@ jobs:
 
           cat > "$RUNNER_TEMP/mysql.cnf" <<EOF
           [client]
-          host=mysql
+          host=main-mysql
           user=$DEMO_USER
           password=$DEMO_PASSWORD
+          default-character-set=utf8mb4
           EOF
 
 
