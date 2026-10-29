@@ -1,0 +1,67 @@
+name: Deploy database
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "db/**"
+      - "seeds/**"
+      - ".github/workflows/database.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on:
+      - uber-demo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Create MySQL client config
+        env:
+          DEMO_USER: ${{ secrets.demo_user }}
+          DEMO_PASSWORD: ${{ secrets.demo_password }}
+        run: |
+          umask 077
+
+          cat > "$RUNNER_TEMP/mysql.cnf" <<EOF
+          [client]
+          host=main-mysql
+          user=$DEMO_USER
+          password=$DEMO_PASSWORD
+          EOF
+
+      - name: Check database connection
+        run: |
+          mysql \
+            --defaults-extra-file="$RUNNER_TEMP/mysql.cnf" \
+            -e "SELECT VERSION();"
+
+      - name: Deploy database
+        run: |
+          set -euo pipefail
+
+          for file in db/*.sql; do
+            echo "Running $file"
+
+            mysql \
+              --defaults-extra-file="$RUNNER_TEMP/mysql.cnf" \
+              < "$file"
+          done
+
+      - name: Deploy development seed
+        run: |
+          mysql \
+            --defaults-extra-file="$RUNNER_TEMP/mysql.cnf" \
+            uber < seeds/dev_seed.sql
+
+      - name: Remove MySQL config
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/mysql.cnf"
