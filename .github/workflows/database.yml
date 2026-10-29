@@ -48,12 +48,20 @@ jobs:
         run: |
           set -euo pipefail
 
+          mysql \
+            --defaults-extra-file="$RUNNER_TEMP/mysql.cnf" \
+            < db/000_create_database.sql
+
           for file in db/*.sql; do
+            if [ "$file" = "db/000_create_database.sql" ]; then
+              continue
+            fi
+
             echo "Running $file"
 
             mysql \
               --defaults-extra-file="$RUNNER_TEMP/mysql.cnf" \
-              < "$file"
+              uber < "$file"
           done
 
       - name: Deploy development seed
