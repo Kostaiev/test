@@ -38,10 +38,6 @@ jobs:
           EOF
 
 
-      - name: Install MySQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y default-mysql-client
       - name: Check database connection
         run: |
           mysql \
